@@ -125,10 +125,11 @@ public final class AmqpConnectionBuilder {
      * Sets the credential used to authenticate requests to the AMQP message broker.
      *
      * @param tokenCredential {@link TokenCredential} to be used for authentication.
+     * @param activeDirectoryScope Active directory scope.
      *
      * @return The updated {@link AmqpConnectionBuilder} object.
      */
-    public AmqpConnectionBuilder tokenCredential(TokenCredential tokenCredential) {
+    public AmqpConnectionBuilder tokenCredential(TokenCredential tokenCredential, String activeDirectoryScope) {
         return this;
     }
 
