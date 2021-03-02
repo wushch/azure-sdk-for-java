@@ -47,15 +47,12 @@ public class ReactorHandlerProvider {
      * @throws NullPointerException If {@code connectionId}, {@code productName}, {@code clientVersion},
      *      {@code options} is {@code null}.
      */
-    public ConnectionHandler createConnectionHandler(String connectionId, String productName, String clientVersion,
-        ConnectionOptions options) {
+    public ConnectionHandler createConnectionHandler(String connectionId, ConnectionOptions options) {
         Objects.requireNonNull(connectionId, "'connectionId' cannot be null.");
         Objects.requireNonNull(options, "'options' cannot be null.");
-        Objects.requireNonNull(productName, "'productName' cannot be null.");
-        Objects.requireNonNull(clientVersion, "'clientVersion' cannot be null.");
 
         if (options.getTransportType() == AmqpTransportType.AMQP) {
-            return new ConnectionHandler(connectionId, productName, clientVersion, options);
+            return new ConnectionHandler(connectionId, options);
         }
 
         if (options.getTransportType() != AmqpTransportType.AMQP_WEB_SOCKETS) {

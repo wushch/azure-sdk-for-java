@@ -9,20 +9,25 @@ import com.azure.core.amqp.ProxyOptions;
 import com.azure.core.amqp.implementation.handler.ConnectionHandler;
 import com.azure.core.amqp.implementation.handler.WebSocketsConnectionHandler;
 import com.azure.core.amqp.models.CbsAuthorizationType;
+import com.azure.core.amqp.models.SslVerifyMode;
 import com.azure.core.annotation.Immutable;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.util.ClientOptions;
 import com.azure.core.util.logging.ClientLogger;
-import org.apache.qpid.proton.engine.SslDomain;
 import reactor.core.scheduler.Scheduler;
 
 import java.util.Objects;
+import java.util.stream.StreamSupport;
 
 /**
  * A wrapper class that contains all parameters that are needed to establish a connection to an AMQP message broker.
  */
 @Immutable
 public class ConnectionOptions {
+    // These name version keys are used in our properties files to specify client product and version information.
+    private static final String NAME_KEY = "name";
+    private static final String VERSION_KEY = "version";
+
     private final TokenCredential tokenCredential;
     private final AmqpTransportType transport;
     private final AmqpRetryOptions retryOptions;
@@ -31,7 +36,9 @@ public class ConnectionOptions {
     private final String fullyQualifiedNamespace;
     private final CbsAuthorizationType authorizationType;
     private final ClientOptions clientOptions;
-    private final SslDomain.VerifyMode verifyMode;
+    private final String clientProduct;
+    private final String clientVersion;
+    private final SslVerifyMode verifyMode;
     private final String hostname;
     private final int port;
 
@@ -57,7 +64,7 @@ public class ConnectionOptions {
     public ConnectionOptions(String fullyQualifiedNamespace, TokenCredential tokenCredential,
         CbsAuthorizationType authorizationType, AmqpTransportType transport, AmqpRetryOptions retryOptions,
         ProxyOptions proxyOptions, Scheduler scheduler, ClientOptions clientOptions,
-        SslDomain.VerifyMode verifyMode) {
+        SslVerifyMode verifyMode) {
         this(fullyQualifiedNamespace, tokenCredential, authorizationType, transport, retryOptions,
             proxyOptions, scheduler, clientOptions, verifyMode, fullyQualifiedNamespace, getPort(transport));
     }
@@ -88,7 +95,7 @@ public class ConnectionOptions {
     public ConnectionOptions(String fullyQualifiedNamespace, TokenCredential tokenCredential,
         CbsAuthorizationType authorizationType, AmqpTransportType transport, AmqpRetryOptions retryOptions,
         ProxyOptions proxyOptions, Scheduler scheduler, ClientOptions clientOptions,
-        SslDomain.VerifyMode verifyMode, String hostname, int port) {
+        SslVerifyMode verifyMode, String hostname, int port) {
 
         this.fullyQualifiedNamespace = Objects.requireNonNull(fullyQualifiedNamespace,
             "'fullyQualifiedNamespace' is required.");
@@ -102,6 +109,17 @@ public class ConnectionOptions {
         this.hostname = Objects.requireNonNull(hostname, "'hostname' cannot be null.");
         this.port = port != -1 ? port : getPort(transport);
         this.proxyOptions = proxyOptions;
+
+        this.clientProduct = StreamSupport.stream(clientOptions.getHeaders().spliterator(), false)
+            .filter(e -> NAME_KEY.equals(e.getName()))
+            .map(e -> e.getValue())
+            .findFirst()
+            .orElse("UNKNOWN PRODUCT");
+        this.clientVersion = StreamSupport.stream(clientOptions.getHeaders().spliterator(), false)
+            .filter(e -> VERSION_KEY.equals(e.getName()))
+            .map(e -> e.getValue())
+            .findFirst()
+            .orElse("UNKNOWN VERSION");
     }
 
     /**
@@ -120,6 +138,24 @@ public class ConnectionOptions {
      */
     public ClientOptions getClientOptions() {
         return clientOptions;
+    }
+
+    /**
+     * Gets the product information for this AMQP connection.
+     *
+     * @return The product information for this AMQP connection.
+     */
+    public String getClientProduct() {
+        return clientProduct;
+    }
+
+    /**
+     * Gets the client version for this AMQP connection.
+     *
+     * @return The client version for this AMQP connection.
+     */
+    public String getClientVersion() {
+        return clientVersion;
     }
 
     /**
@@ -159,7 +195,7 @@ public class ConnectionOptions {
      *
      * @return The verification mode for the SSL certificate.
      */
-    public SslDomain.VerifyMode getSslVerifyMode() {
+    public SslVerifyMode getSslVerifyMode() {
         return verifyMode;
     }
 
